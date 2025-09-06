@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>1000 Products CSV Generator</title>
+    <style>
+        body { font-family: Arial; padding: 20px; max-width: 800px; margin: 0 auto; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        .output { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; }
+        .download-link { display: inline-block; margin-top: 10px; padding: 8px 15px; background: #28a745; color: white; text-decoration: none; border-radius: 3px; }
+        .stats { margin-top: 15px; padding: 10px; background: #e9ecef; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🛍️ Fashion Products CSV Generator</h1>
+    <p>Generate exactly 1000 fashion products for your e-commerce store.</p>
+    
+    <button onclick="generateCSV()">🚀 Generate 1000 Products CSV</button>
+    
+    <div id="output" class="output" style="display: none;">
+        <h3>✅ Generated Successfully!</h3>
+        <div id="stats" class="stats"></div>
+        <a id="downloadLink" class="download-link" download="fashion_products_1000.csv">📥 Download CSV File</a>
+        <p><small>Click the download link above to save your CSV file with 1000 products.</small></p>
+    </div>
+
+    <script>
+        function generateCSV() {
+            console.log("Generating 1000 products...");
+            
+            const categories = [
+                { name: "Men", subcategories: ["Topwear", "Bottomwear", "Winterwear"], sizes: "S,M,L,XL" },
+                { name: "Women", subcategories: ["Topwear", "Bottomwear", "Winterwear"], sizes: "XS,S,M,L" },
+                { name: "Kids", subcategories: ["Topwear", "Bottomwear", "Winterwear"], sizes: "XS,S,M" }
+            ];
+
+            const brands = ["Nike", "Adidas", "Puma", "H&M", "Zara", "Levi's", "Gap", "Uniqlo", "Forever 21", "Biba", "Libas", "Aurelia", "W", "Anouk", "Soch", "Khushal K", "Global Desi", "Varanga"];
+            const colors = ["Black", "White", "Navy Blue", "Red", "Pink", "Green", "Yellow", "Orange", "Purple", "Grey", "Brown", "Beige", "Maroon", "Teal", "Coral", "Mint"];
+
+            const menProducts = [
+                { type: "T-Shirt", sub: "Topwear", desc: "Comfortable cotton t-shirt with modern fit" },
+                { type: "Jeans", sub: "Bottomwear", desc: "Classic denim jeans with regular fit" },
+                { type: "Shirt", sub: "Topwear", desc: "Formal shirt perfect for office wear" },
+                { type: "Hoodie", sub: "Topwear", desc: "Casual hoodie with kangaroo pocket" },
+                { type: "Chinos", sub: "Bottomwear", desc: "Smart casual chino pants" },
+                { type: "Jacket", sub: "Winterwear", desc: "Stylish jacket for cold weather" },
+                { type: "Polo", sub: "Topwear", desc: "Classic polo shirt with collar" },
+                { type: "Shorts", sub: "Bottomwear", desc: "Comfortable shorts for summer" },
+                { type: "Sweater", sub: "Winterwear", desc: "Warm sweater for winter season" },
+                { type: "Track Pants", sub: "Bottomwear", desc: "Athletic track pants for sports" }
+            ];
+
+            const womenProducts = [
+                { type: "Dress", sub: "Topwear", desc: "Elegant dress for special occasions" },
+                { type: "Top", sub: "Topwear", desc: "Stylish top for casual wear" },
+                { type: "Jeans", sub: "Bottomwear", desc: "Trendy jeans with perfect fit" },
+                { type: "Kurta", sub: "Topwear", desc: "Traditional kurta with modern styling" },
+                { type: "Palazzo", sub: "Bottomwear", desc: "Comfortable palazzo pants" },
+                { type: "Blouse", sub: "Topwear", desc: "Elegant blouse for professional wear" },
+                { type: "Skirt", sub: "Bottomwear", desc: "Fashionable skirt for trendy look" },
+                { type: "Cardigan", sub: "Winterwear", desc: "Cozy cardigan for layering" },
+                { type: "Leggings", sub: "Bottomwear", desc: "Stretchable leggings for comfort" },
+                { type: "Jacket", sub: "Winterwear", desc: "Stylish jacket for winter" }
+            ];
+
+            const kidsProducts = [
+                { type: "T-Shirt", sub: "Topwear", desc: "Fun t-shirt with cartoon prints" },
+                { type: "Jeans", sub: "Bottomwear", desc: "Durable jeans for active kids" },
+                { type: "Dress", sub: "Topwear", desc: "Cute dress for special occasions" },
+                { type: "Shorts", sub: "Bottomwear", desc: "Comfortable shorts for play" },
+                { type: "Hoodie", sub: "Topwear", desc: "Warm hoodie for kids" },
+                { type: "Track Pants", sub: "Bottomwear", desc: "Sporty track pants for kids" },
+                { type: "Jacket", sub: "Winterwear", desc: "Warm jacket for cold weather" },
+                { type: "Pajama Set", sub: "Topwear", desc: "Cozy pajama set for bedtime" },
+                { type: "Skirt", sub: "Bottomwear", desc: "Pretty skirt for girls" },
+                { type: "Sweater", sub: "Winterwear", desc: "Soft sweater for winter" }
+            ];
+
+            // Generate 1000 products
+            let products = [];
+            let distribution = {};
+
+            for (let i = 0; i < 1000; i++) {
+                // Distribute: 40% Women, 35% Men, 25% Kids
+                let category, productList;
+                if (i < 400) {
+                    category = categories[1]; // Women
+                    productList = womenProducts;
+                } else if (i < 750) {
+                    category = categories[0]; // Men  
+                    productList = menProducts;
+                } else {
+                    category = categories[2]; // Kids
+                    productList = kidsProducts;
+                }
+                
+                const product = productList[i % productList.length];
+                const brand = brands[i % brands.length];
+                const color = colors[i % colors.length];
+                const price = Math.floor(Math.random() * 4000) + 500; // ₹500-₹4500
+                const bestseller = Math.random() > 0.8; // 20% bestsellers
+                
+                const name = `${brand} ${category.name} ${color} ${product.type}`;
+                const description = `${color} ${product.type.toLowerCase()} from ${brand}. ${product.desc}. Premium quality and comfortable fit.`;
+                const imageUrl = `https://images.unsplash.com/photo-${1500000000 + i}?w=500&h=600&fit=crop&q=80`;
+                
+                products.push({
+                    name: name,
+                    description: description,
+                    price: price,
+                    category: category.name,
+                    subCategory: product.sub,
+                    bestseller: bestseller,
+                    sizes: category.sizes,
+                    image1: imageUrl,
+                    image2: "",
+                    image3: "",
+                    image4: ""
+                });
+
+                // Track distribution
+                const key = `${category.name}-${product.sub}`;
+                distribution[key] = (distribution[key] || 0) + 1;
+            }
+
+            // Convert to CSV
+            const headers = ['name', 'description', 'price', 'category', 'subCategory', 'bestseller', 'sizes', 'image1', 'image2', 'image3', 'image4'];
+            let csvContent = headers.join(',') + '\\n';
+
+            products.forEach(product => {
+                const row = [
+                    `"${product.name}"`,
+                    `"${product.description}"`,
+                    product.price,
+                    `"${product.category}"`,
+                    `"${product.subCategory}"`,
+                    product.bestseller,
+                    `"${product.sizes}"`,
+                    `"${product.image1}"`,
+                    `"${product.image2}"`,
+                    `"${product.image3}"`,
+                    `"${product.image4}"`
+                ];
+                csvContent += row.join(',') + '\\n';
+            });
+
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            
+            // Update UI
+            document.getElementById('output').style.display = 'block';
+            document.getElementById('downloadLink').href = url;
+            
+            // Show statistics
+            let statsHtml = `<strong>📊 Generated:</strong> ${products.length} products<br><br>`;
+            statsHtml += `<strong>📂 Distribution:</strong><br>`;
+            Object.entries(distribution).forEach(([key, count]) => {
+                statsHtml += `• ${key}: ${count} products<br>`;
+            });
+            
+            document.getElementById('stats').innerHTML = statsHtml;
+            
+            console.log("✅ CSV generation complete!");
+        }
+    </script>
+</body>
+</html>

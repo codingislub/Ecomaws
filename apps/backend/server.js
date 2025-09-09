@@ -13,6 +13,15 @@ const app = express()
 const port = process.env.PORT || 4000
 connectDB()
 
+app.use((req, res, next) => {
+    console.log(`\n=== INCOMING REQUEST ===`);
+    console.log(`${req.method} ${req.originalUrl}`);
+    console.log('Headers:', req.headers);
+    console.log('Body:', req.body);
+    console.log('========================\n');
+    next();
+});
+
 // middlewares
 app.use(express.json())
 app.use(cors())

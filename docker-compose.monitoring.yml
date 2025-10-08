@@ -29,8 +29,8 @@ services:
     ports:
       - "3001:3000"  # Changed to 3001 to avoid conflict with your frontend
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-worldmap-panel
       - GF_SECURITY_ALLOW_EMBEDDING=true
@@ -64,20 +64,20 @@ services:
     restart: unless-stopped
 
   mongodb-exporter:
-    image: percona/mongodb_exporter:latest
+    image: percona/mongodb_exporter:0.40
     container_name: ecomaws-mongodb-exporter
     ports:
       - "9216:9216"
     environment:
-      # MongoDB Atlas connection string
-      - MONGODB_URI=mongodb+srv://aryan:Rbntj4321@cluster0.ebhj7ux.mongodb.net/?retryWrites=true&w=majority
+      # MongoDB Atlas connection string from .env
+      - MONGODB_URI=${MONGODB_URI}
     networks:
       - monitoring
     depends_on:
       - prometheus
     restart: unless-stopped
     # Command for MongoDB Atlas
-    command: --mongodb.uri=mongodb+srv://aryan:Rbntj4321@cluster0.ebhj7ux.mongodb.net/?retryWrites=true&w=majority
+    command: --mongodb.uri=${MONGODB_URI}
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.0  # Using specific version for stability

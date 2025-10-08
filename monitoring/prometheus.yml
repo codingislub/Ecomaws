@@ -6,9 +6,9 @@ scrape_configs:
   - job_name: 'ecommerce-backend'
     static_configs:
       - targets: ['172.24.0.1:4000']
-    scrape_interval: 10s
+    scrape_interval: 15s
     metrics_path: '/metrics'
-    scrape_timeout: 30s
+    scrape_timeout: 10s
 
   - job_name: 'node-exporter'
     static_configs:

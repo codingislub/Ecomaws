@@ -1,0 +1,65 @@
+groups:
+  - name: ecommerce_alerts
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors per second"
+
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time"
+          description: "95th percentile response time is {{ $value }}s"
+
+      - alert: LowOrderRate
+        expr: rate(ecommerce_orders_total[1h]) < 0.001
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low order rate"
+          description: "Order rate has dropped to {{ $value }} orders per second"
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 85% for {{ $labels.instance }}"
+
+      - alert: MongoDBDown
+        expr: up{job="mongodb-exporter"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MongoDB is down"
+          description: "MongoDB exporter has been down for more than 5 minutes"
+
+      - alert: ApplicationDown
+        expr: up{job="ecommerce-backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "E-commerce application is down"
+          description: "The e-commerce backend has been down for more than 2 minutes"

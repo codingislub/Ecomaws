@@ -1,0 +1,138 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ecomaws-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--web.route-prefix=/'
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ecomaws-grafana
+    ports:
+      - "3001:3000"  # Changed to 3001 to avoid conflict with your frontend
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-worldmap-panel
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: ecomaws-node-exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.systemd'
+      - '--collector.processes'
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  mongodb-exporter:
+    image: percona/mongodb_exporter:latest
+    container_name: ecomaws-mongodb-exporter
+    ports:
+      - "9216:9216"
+    environment:
+      # MongoDB Atlas connection string
+      - MONGODB_URI=mongodb+srv://aryan:Rbntj4321@cluster0.ebhj7ux.mongodb.net/?retryWrites=true&w=majority
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    # Command for MongoDB Atlas
+    command: --mongodb.uri=mongodb+srv://aryan:Rbntj4321@cluster0.ebhj7ux.mongodb.net/?retryWrites=true&w=majority
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0  # Using specific version for stability
+    container_name: ecomaws-cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    networks:
+      - monitoring
+    restart: unless-stopped
+    # Platform specific settings for Windows
+    platform: linux/amd64
+
+  # Optional: Redis exporter if you're using Redis for caching
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: ecomaws-redis-exporter
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis://host.docker.internal:6379
+    networks:
+      - monitoring
+    restart: unless-stopped
+    # Comment out if you're not using Redis
+    profiles:
+      - redis
+
+  # Application monitoring - connects to your Node.js app
+  app-monitor:
+    image: prom/blackbox-exporter:latest
+    container_name: ecomaws-blackbox-exporter
+    ports:
+      - "9115:9115"
+    volumes:
+      - ./monitoring/blackbox.yml:/etc/blackbox_exporter/config.yml
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+networks:
+  monitoring:
+    driver: bridge
+    name: ecomaws-monitoring
+
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

@@ -1,0 +1,22 @@
+# CloudWatch Exporter configuration
+region: us-east-1
+metrics:
+  - aws_namespace: AWS/EC2
+    aws_metric_name: CPUUtilization
+    aws_dimensions: [InstanceId]
+    aws_statistics: [Average]
+    
+  - aws_namespace: AWS/ApplicationELB
+    aws_metric_name: RequestCount
+    aws_dimensions: [LoadBalancer]
+    aws_statistics: [Sum]
+    
+  - aws_namespace: AWS/Lambda
+    aws_metric_name: Duration
+    aws_dimensions: [FunctionName]
+    aws_statistics: [Average]
+    
+  - aws_namespace: AWS/S3
+    aws_metric_name: BucketSizeBytes
+    aws_dimensions: [BucketName, StorageType]
+    aws_statistics: [Average]

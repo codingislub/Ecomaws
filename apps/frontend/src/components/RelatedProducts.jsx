@@ -2,25 +2,42 @@ import React, { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import Title from './Title';
 import ProductItem from './ProductItem';
+import axios from 'axios';
 
-const RelatedProducts = ({category,subCategory}) => {
+const RelatedProducts = ({category,subCategory, productId}) => {
 
-    const { products } = useContext(ShopContext);
+    const { products, backendUrl } = useContext(ShopContext);
     const [related,setRelated] = useState([]);
+    const [usePersonalize, setUsePersonalize] = useState(false);
 
     useEffect(()=>{
+        fetchRelatedProducts()
+    },[products, productId])
 
+    const fetchRelatedProducts = async () => {
+        // Try to get Personalize recommendations first
+        if (productId) {
+            try {
+                const response = await axios.get(`${backendUrl}/api/personalize/recommendations/${productId}?numResults=6`)
+                if (response.data.success && response.data.recommendations.length > 0) {
+                    setRelated(response.data.recommendations)
+                    setUsePersonalize(true)
+                    return
+                }
+            } catch (error) {
+                console.error('Error fetching Personalize recommendations:', error)
+            }
+        }
+
+        // Fallback to category-based recommendations
         if (products.length > 0) {
-            
             let productsCopy = products.slice();
-            
             productsCopy = productsCopy.filter((item) => category === item.category);
             productsCopy = productsCopy.filter((item) => subCategory === item.subCategory);
-
             setRelated(productsCopy.slice(0,5));
+            setUsePersonalize(false)
         }
-        
-    },[products])
+    }
 
   return (
     <div className='my-24'>

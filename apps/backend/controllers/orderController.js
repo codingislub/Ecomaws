@@ -2,6 +2,7 @@ import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
 import Stripe from 'stripe'
 import razorpay from 'razorpay'
+import { trackPurchase } from "../utils/personalizeEvents.js";
 
 // global variables
 const currency = 'inr'
@@ -36,6 +37,18 @@ const placeOrder = async (req,res) => {
         await newOrder.save()
 
         await userModel.findByIdAndUpdate(userId,{cartData:{}})
+
+        // Track purchase event for Personalize
+        try {
+            const purchaseItems = items.map(item => ({
+                productId: item._id,
+                quantity: item.quantity,
+                price: item.price
+            }));
+            await trackPurchase(userId, purchaseItems);
+        } catch (error) {
+            console.error('Error tracking purchase event:', error);
+        }
 
         res.json({success:true,message:"Order Placed"})
 
@@ -113,6 +126,22 @@ const verifyStripe = async (req,res) => {
         if (success === "true") {
             await orderModel.findByIdAndUpdate(orderId, {payment:true});
             await userModel.findByIdAndUpdate(userId, {cartData: {}})
+            
+            // Track purchase event for Personalize (Stripe payment)
+            try {
+                const order = await orderModel.findById(orderId);
+                if (order && order.items) {
+                    const purchaseItems = order.items.map(item => ({
+                        productId: item._id,
+                        quantity: item.quantity,
+                        price: item.price
+                    }));
+                    await trackPurchase(userId, purchaseItems);
+                }
+            } catch (error) {
+                console.error('Error tracking purchase event:', error);
+            }
+            
             res.json({success: true});
         } else {
             await orderModel.findByIdAndDelete(orderId)
@@ -174,6 +203,22 @@ const verifyRazorpay = async (req,res) => {
         if (orderInfo.status === 'paid') {
             await orderModel.findByIdAndUpdate(orderInfo.receipt,{payment:true});
             await userModel.findByIdAndUpdate(userId,{cartData:{}})
+            
+            // Track purchase event for Personalize (Razorpay payment)
+            try {
+                const order = await orderModel.findById(orderInfo.receipt);
+                if (order && order.items) {
+                    const purchaseItems = order.items.map(item => ({
+                        productId: item._id,
+                        quantity: item.quantity,
+                        price: item.price
+                    }));
+                    await trackPurchase(userId, purchaseItems);
+                }
+            } catch (error) {
+                console.error('Error tracking purchase event:', error);
+            }
+            
             res.json({ success: true, message: "Payment Successful" })
         } else {
              res.json({ success: false, message: 'Payment Failed' });

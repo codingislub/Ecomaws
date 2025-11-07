@@ -7,7 +7,7 @@ import RelatedProducts from '../components/RelatedProducts';
 const Product = () => {
 
   const { productId } = useParams();
-  const { products, currency ,addToCart } = useContext(ShopContext);
+  const { products, currency ,addToCart, trackProductView } = useContext(ShopContext);
   const [productData, setProductData] = useState(false);
   const [image, setImage] = useState('')
   const [size,setSize] = useState('')
@@ -18,6 +18,8 @@ const Product = () => {
       if (item._id === productId) {
         setProductData(item)
         setImage(item.image[0])
+        // Track product view for Personalize
+        trackProductView(productId, item)
         return null;
       }
     })
@@ -92,7 +94,7 @@ const Product = () => {
 
       {/* --------- display related products ---------- */}
 
-      <RelatedProducts category={productData.category} subCategory={productData.subCategory} />
+      <RelatedProducts category={productData.category} subCategory={productData.subCategory} productId={productId} />
 
     </div>
   ) : <div className=' opacity-0'></div>

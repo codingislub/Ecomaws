@@ -16,6 +16,50 @@ const ShopContextProvider = (props) => {
     const [products, setProducts] = useState([]);
     const [token, setToken] = useState('')
     const navigate = useNavigate();
+    const [pagination, setPagination] = useState({
+        total: 0,
+        page: 1,
+        limit: 36,
+        totalPages: 0
+    });
+    
+    // Get or generate userId for Personalize tracking
+    const getUserId = () => {
+        if (token) {
+            // Extract userId from JWT token for logged-in users
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                return payload.id;
+            } catch (error) {
+                console.error('Error parsing token:', error);
+            }
+        }
+        // Use or create session ID for anonymous users
+        let sessionId = localStorage.getItem('sessionId');
+        if (!sessionId) {
+            sessionId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            localStorage.setItem('sessionId', sessionId);
+        }
+        return sessionId;
+    };
+
+    // Track product view event
+    const trackProductView = async (productId, productData) => {
+        try {
+            const userId = getUserId();
+            await axios.post(backendUrl + '/api/personalize/track/view', {
+                userId,
+                productId,
+                productData: {
+                    name: productData?.name,
+                    category: productData?.category,
+                    price: productData?.price
+                }
+            });
+        } catch (error) {
+            console.error('Error tracking view:', error);
+        }
+    };
 
 
     const addToCart = async (itemId, size) => {
@@ -40,6 +84,23 @@ const ShopContextProvider = (props) => {
             cartData[itemId][size] = 1;
         }
         setCartItems(cartData);
+
+        // Track add to cart event for Personalize
+        try {
+            const userId = getUserId();
+            const product = products.find(p => p._id === itemId);
+            await axios.post(backendUrl + '/api/personalize/track/cart', {
+                userId,
+                productId: itemId,
+                quantity: 1,
+                productData: {
+                    name: product?.name,
+                    price: product?.price
+                }
+            });
+        } catch (error) {
+            console.error('Error tracking cart add:', error);
+        }
 
         if (token) {
             try {
@@ -108,13 +169,16 @@ const ShopContextProvider = (props) => {
         return totalAmount;
     }
 
-    const getProductsData = async () => {
+    const getProductsData = async (page = 1, limit = 36) => {
         try {
 
-            const response = await axios.get(backendUrl + '/api/product/list')
+            const response = await axios.get(backendUrl + `/api/product/list?page=${page}&limit=${limit}`)
             if (response.data.success) {
                 console.log("Fetched products:", response.data.products)
-                setProducts(response.data.products.reverse())
+                setProducts(response.data.products)
+                if (response.data.pagination) {
+                    setPagination(response.data.pagination)
+                }
             } else {
                 toast.error(response.data.message)
             }
@@ -158,7 +222,8 @@ const ShopContextProvider = (props) => {
         cartItems, addToCart,setCartItems,
         getCartCount, updateQuantity,
         getCartAmount, navigate, backendUrl,
-        setToken, token
+        setToken, token, pagination, getProductsData,
+        trackProductView, getUserId
     }
 
     return (

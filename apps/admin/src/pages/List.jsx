@@ -6,13 +6,23 @@ import { toast } from 'react-toastify'
 const List = ({ token }) => {
 
   const [list, setList] = useState([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0
+  })
 
-  const fetchList = async () => {
+  const fetchList = async (page = 1, limit = 10) => {
     try {
 
-      const response = await axios.get(backendUrl + '/api/product/list')
+      const response = await axios.get(backendUrl + `/api/product/list?page=${page}&limit=${limit}`)
       if (response.data.success) {
-        setList(response.data.products.reverse());
+        setList(response.data.products);
+        if (response.data.pagination) {
+          setPagination(response.data.pagination)
+        }
       }
       else {
         toast.error(response.data.message)
@@ -43,8 +53,12 @@ const List = ({ token }) => {
   }
 
   useEffect(() => {
-    fetchList()
-  }, [])
+    fetchList(currentPage, 10)
+  }, [currentPage])
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page)
+  }
 
   return (
     <>
@@ -76,6 +90,31 @@ const List = ({ token }) => {
         }
 
       </div>
+
+      {/* Pagination Controls */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className='flex justify-center items-center gap-2 mt-4'>
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className='px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm'
+          >
+            Previous
+          </button>
+          
+          <span className='text-sm'>
+            Page {currentPage} of {pagination.totalPages} ({pagination.total} total products)
+          </span>
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === pagination.totalPages}
+            className='px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm'
+          >
+            Next
+          </button>
+        </div>
+      )}
     </>
   )
 }

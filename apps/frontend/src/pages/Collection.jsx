@@ -8,12 +8,13 @@ const CATEGORY_OPTIONS = ['Men', 'Women', 'Kids']
 const SUBCATEGORY_OPTIONS = ['Topwear', 'Bottomwear', 'Winterwear']
 
 const Collection = () => {
-  const { products, search, showSearch } = useContext(ShopContext)
+  const { products, search, showSearch, pagination, getProductsData } = useContext(ShopContext)
   const [showFilter, setShowFilter] = useState(false)
   const [filterProducts, setFilterProducts] = useState([])
   const [category, setCategory] = useState([])
   const [subCategory, setSubCategory] = useState([])
   const [sortType, setSortType] = useState('relavent')
+  const [currentPage, setCurrentPage] = useState(1)
 
   const toggleCategory = (e) => {
     const value = e.target.value
@@ -88,6 +89,15 @@ const Collection = () => {
   useEffect(() => {
     applyFilter()
   }, [sortType])
+
+  useEffect(() => {
+    getProductsData(currentPage, 36)
+  }, [currentPage])
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   return (
     <div className='flex flex-col sm:flex-row gap-1 sm:gap-10 pt-10 border-t'>
@@ -181,6 +191,59 @@ const Collection = () => {
             ))
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {pagination && pagination.totalPages > 1 && (
+          <div className='flex justify-center items-center gap-2 mt-8'>
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className='px-4 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              Previous
+            </button>
+            
+            <div className='flex gap-2'>
+              {[...Array(pagination.totalPages)].map((_, i) => {
+                const pageNum = i + 1
+                // Show first page, last page, current page, and pages around current
+                if (
+                  pageNum === 1 ||
+                  pageNum === pagination.totalPages ||
+                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`px-4 py-2 border rounded ${
+                        currentPage === pageNum
+                          ? 'bg-black text-white'
+                          : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  )
+                } else if (
+                  pageNum === currentPage - 2 ||
+                  pageNum === currentPage + 2
+                ) {
+                  return <span key={pageNum}>...</span>
+                }
+                return null
+              })}
+            </div>
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === pagination.totalPages}
+              className='px-4 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

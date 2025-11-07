@@ -54,6 +54,16 @@ const addProduct = async (req, res) => {
       }
     }
 
+    // Normalize any non-URL entries (keys) into full URLs
+    const baseUrl = (process.env.PUBLIC_ASSET_BASE_URL?.replace(/\/$/, ""))
+      || `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com`;
+
+    imagesUrl = (imagesUrl || []).map((u) =>
+      typeof u === 'string' && /^https?:\/\//i.test(u)
+        ? u
+        : `${baseUrl}/${String(u).replace(/^\//, '')}`
+    );
+
     console.log("Final imagesUrl array:", imagesUrl);
     console.log("Final imagesUrl length:", imagesUrl.length);
 
@@ -96,8 +106,26 @@ const addProduct = async (req, res) => {
 
 const listProducts = async (req, res) => {
   try {
-    const products = await productModel.find({});
-    res.json({ success: true, products });
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 36;
+    const skip = (page - 1) * limit;
+
+    const [products, total] = await Promise.all([
+      productModel.find({}).sort({ date: -1 }).skip(skip).limit(limit),
+      productModel.countDocuments({})
+    ]);
+
+    res.json({
+      success: true,
+      products,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
